@@ -143,6 +143,19 @@ cornyields <- tibble(cornyields)
 ### Question 1a: Extract Winneshiek County corn yields, fit a linear time trend, make a plot. Is there a significant time trend?
 
 ```{r}
+# county data
+cornWinneshiek<-cornyields%>%
+  filter(county_name == "WINNESHIEK")
+
+# linear model
+lm_Winneshiek <- lm(yield ~ year, cornWinneshiek)
+summary(lm_Winneshiek)
+
+# plot
+ggplot(cornWinneshiek, mapping = aes(x = year, y = yield)) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  labs(x = "year", y = "yield")
 
 ```
 
@@ -150,7 +163,21 @@ cornyields <- tibble(cornyields)
 ### Question 1b: Fit a quadratic time trend (i.e., year + year^2) and make a plot. Is there evidence for slowing yield growth? 
 
 ```{r}
+#year^2
+cornWinneshiek$yearsq <- cornWinneshiek$year^2
 
+# linear model
+lm_Winneshiek <- lm(yield ~ year + yearsq, cornWinneshiek)
+summary(lm_Winneshiek)
+cornWinneshiek$fitted <- lm_Winneshiek$fitted.values
+
+
+# plot
+ggplot(cornWinneshiek) +
+  geom_point(mapping = aes(x = year, y = yield)) +
+  geom_line(mapping = aes(x = year, y = fitted)) +
+  theme_bw() +
+  labs(x = "year", y = "yield")
 ```
 
 
