@@ -215,13 +215,47 @@ ggplot(WinneshiekJoin) +
 
 ```
 
+\hstart
+
+* 
+
+\hstop
 
 ### Question 3 -- Cross-Section: Analyze the relationship between temperature and yield across all counties in 2018. Is there a relationship? Interpret the results.
 
 ```{r}
+# get 2018 data
+cyield18 <- cornyields %>% 
+  filter(year == 2018) %>% 
+  group_by(county_name) %>% 
+  unique() %>% 
+  filter(!is.na(county_ansi))
+
+temp18 <- tmaxdf%>%
+  group_by(countyfp)%>%
+  filter(year == 2018)%>%
+  filter(!is.na(tmax))%>%
+  summarize(meantmax = mean(tmax)) %>%
+  rename(county_ansi = "countyfp")
+
+temp18$county_ansi <- as.numeric(as.character(temp18$county_ansi))
+
+#Joining the two dfs together
+county_yield18 <- left_join(cyield18,temp18, by='county_ansi')
+
+#plot
+ggplot(county_yield18, aes(x = yield, y = meantmax))+
+  geom_point()+
+  theme_bw()+
+  labs(x = "Yield", y = "Mean Max Temp (°C)")
 
 ```
 
+\hstart
+
+* 
+
+\hstop
 
 ### Question 4 -- Panel: One way to leverage multiple time series is to group all data into what is called a "panel" regression. Convert the county ID code ("countyfp" or "county_ansi") into factor using as.factor, then include this variable in a regression using all counties' yield and summer temperature data. How does the significance of your temperature coefficients (Tmax, Tmax^2) change? Make a plot comparing actual and fitted yields and interpret the results of your model.
 
@@ -229,6 +263,11 @@ ggplot(WinneshiekJoin) +
 
 ```
 
+\hstart
+
+* 
+
+\hstop
 
 ### Question 5 -- Soybeans: Download NASS data on soybean yields and explore either a time series relationship for a given county, the cross-sectional relationship for a given year, or a panel across all counties and years.
 
@@ -236,6 +275,11 @@ ggplot(WinneshiekJoin) +
 
 ```
 
+\hstart
+
+* 
+
+\hstop
 
 ### Bonus: Find a package to make a county map of Iowa displaying some sort of information about yields or weather. Interpret your map.
 
