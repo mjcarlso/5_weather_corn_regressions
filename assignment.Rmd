@@ -159,6 +159,11 @@ ggplot(cornWinneshiek, mapping = aes(x = year, y = yield)) +
 
 ```
 
+\hstart
+
+* 
+
+\hstop
 
 ### Question 1b: Fit a quadratic time trend (i.e., year + year^2) and make a plot. Is there evidence for slowing yield growth? 
 
@@ -180,10 +185,33 @@ ggplot(cornWinneshiek) +
   labs(x = "year", y = "yield")
 ```
 
+\hstart
+
+* 
+
+\hstop
 
 ### Question 2 -- Time Series: Let's analyze the relationship between temperature and yields for the Winneshiek County time series. Use data on yield and summer avg Tmax. Is adding year or Tmax^2 to your model helpful? Make a plot and interpret the results.
 
 ```{r}
+# join data
+WinneshiekJoin<-winnesummer%>%
+  inner_join(cornWinneshiek, by = "year")
+
+
+# linear model
+WinneshiekJoin$tempsq <-WinneshiekJoin$meantmax^2
+lm_Winne <- lm(yield ~ meantmax + tempsq, WinneshiekJoin)
+summary(lm_Winne)
+
+
+# plot
+WinneshiekJoin$quadfitted<-lm_Winne$fitted.values
+ggplot(WinneshiekJoin) +
+  geom_point(mapping = aes(x = meantmax, y = yield)) +
+  geom_line(mapping = aes(x = meantmax, y = quadfitted)) +
+  theme_bw() +
+  labs(x = "Temperature", y = "yield")
 
 ```
 
