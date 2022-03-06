@@ -155,7 +155,7 @@ summary(lm_Winneshiek)
 ggplot(cornWinneshiek, mapping = aes(x = year, y = yield)) +
   geom_point() +
   geom_smooth(method = lm) +
-  labs(x = "year", y = "yield")
+  labs(x = "Year", y = "Yield")
 
 ```
 
@@ -235,6 +235,7 @@ temp18 <- tmaxdf%>%
   group_by(countyfp)%>%
   filter(year == 2018)%>%
   filter(!is.na(tmax))%>%
+  filter(doy >= 152 & doy <= 243) %>%
   summarize(meantmax = mean(tmax)) %>%
   rename(county_ansi = "countyfp")
 
@@ -243,11 +244,25 @@ temp18$county_ansi <- as.numeric(as.character(temp18$county_ansi))
 #Joining the two dfs together
 county_yield18 <- left_join(cyield18,temp18, by='county_ansi')
 
+# lm
+county_yield18$tempsq <-county_yield18$meantmax^2
+lm_county18 <- lm(yield ~ meantmax + tempsq, county_yield18)
+summary(lm_county18)
+
+county_yield18$quadfitted<-lm_county18$fitted.values
+
 #plot
 ggplot(county_yield18, aes(x = yield, y = meantmax))+
   geom_point()+
   theme_bw()+
   labs(x = "Yield", y = "Mean Max Temp (°C)")
+
+#plot quadratic
+ggplot(county_yield18) +
+  geom_point(mapping = aes(x = meantmax, y = yield)) +
+  geom_line(mapping = aes(x = meantmax, y = quadfitted)) +
+  theme_bw() +
+  labs(x = "Yield", y = "Temperature")
 
 ```
 
@@ -260,6 +275,35 @@ ggplot(county_yield18, aes(x = yield, y = meantmax))+
 ### Question 4 -- Panel: One way to leverage multiple time series is to group all data into what is called a "panel" regression. Convert the county ID code ("countyfp" or "county_ansi") into factor using as.factor, then include this variable in a regression using all counties' yield and summer temperature data. How does the significance of your temperature coefficients (Tmax, Tmax^2) change? Make a plot comparing actual and fitted yields and interpret the results of your model.
 
 ```{r}
+# combine data
+ttocombine <- tmaxdf%>%
+  filter(doy >= 152 & doy <= 243) %>%
+  group_by(countyfp, year)%>%
+  rename(county_ansi = countyfp)%>%
+  summarize(meantmax = mean(tmax))
+
+#factor
+ttocombine$county_ansi <- as.numeric(as.character(ttocombine$county_ansi))
+
+#Joining the data
+yieldtemp <- inner_join(cornyields,ttocombine,)%>%
+  unique()
+
+#square temp
+yieldtemp$meantmaxsq <- yieldtemp$meantmax^2
+
+#lm
+lm_yieldtemp<-lm(yield ~ meantmax + meantmaxsq + county_ansi + year, yieldtemp)
+summary(lm_yieldtemp)
+
+#fitted values
+yieldtemp$fittedyield<-lm_yieldtemp$fitted.values
+
+#plot
+ggplot(yieldtemp, aes(x = fittedyield, y = yield))+
+  geom_point()+
+  geom_abline(color = "purple", size = 1)+
+  labs(x = "Fitted Yield Values", y = "Yield")
 
 ```
 
@@ -272,6 +316,37 @@ ggplot(county_yield18, aes(x = yield, y = meantmax))+
 ### Question 5 -- Soybeans: Download NASS data on soybean yields and explore either a time series relationship for a given county, the cross-sectional relationship for a given year, or a panel across all counties and years.
 
 ```{r}
+
+# set our API key with NASS
+nassqs_auth(key = "DD0322AC-2B3C-34A0-B93C-52D5A8844518")
+
+# parameters to query on 
+params2 <- list(commodity_desc = "SOYBEANS", statisticcat_desc = "YIELD", prodn_practice_desc = "ALL PRODUCTION PRACTICES", year__GE = 1981, state_alpha = "IA")
+
+# download
+soyyieldsall <- nassqs_yields(params)
+
+soyyieldsall$county_ansi <- as.numeric(soyyieldsall$county_ansi)
+soyyieldsall$yield <- as.numeric(soyyieldsall$Value)
+
+# clean and filter this dataset
+soyyields <- select(soyyieldsall, county_ansi, county_name, yield, year) %>%
+  filter(!is.na(county_ansi) & !is.na(yield))
+soyyields <- tibble(soyyields)
+
+# county data
+soyWinneshiek<-soyyields%>%
+  filter(county_name == "WINNESHIEK")
+
+# linear model
+lm_soy <- lm(yield ~ year, soyWinneshiek)
+summary(lm_soy)
+
+# plot
+ggplot(soyWinneshiek, mapping = aes(x = year, y = yield)) +
+  geom_point() +
+  geom_smooth(method = lm) +
+  labs(x = "Year", y = "Yield")
 
 ```
 
