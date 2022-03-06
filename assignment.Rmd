@@ -58,7 +58,7 @@ tmaxdf <- tibble(tmaxdf)
 
 ### Summer temperature trends: Winneshiek County
 
-```{r temp trends}
+```{r temp trends, message=FALSE}
 
 tmaxdf$doy <- as.numeric(tmaxdf$doy)
 tmaxdf$year <- as.numeric(as.character(tmaxdf$year))
@@ -81,7 +81,7 @@ summary(lm_summertmax)
 
 ### Winter Temperatures - Winneshiek County
 
-```{r winter temps}
+```{r winter temps, message=F}
 
 winnewinter <- tmaxdf %>%
   filter(countyfp==191 & (doy <= 59 | doy >= 335) & !is.na(tmax)) %>%
@@ -119,7 +119,7 @@ ggplot(winnewinter) +
 
 ### Download NASS corn yield data
 
-```{r yield download}
+```{r yield download, results='hide'}
 
 # set our API key with NASS
 nassqs_auth(key = "DD0322AC-2B3C-34A0-B93C-52D5A8844518")
@@ -144,7 +144,7 @@ cornyields <- tibble(cornyields)
 
 ### Question 1a: Extract Winneshiek County corn yields, fit a linear time trend, make a plot. Is there a significant time trend?
 
-```{r}
+```{r, message=FALSE}
 # county data
 cornWinneshiek<-cornyields%>%
   filter(county_name == "WINNESHIEK")
@@ -163,7 +163,7 @@ ggplot(cornWinneshiek, mapping = aes(x = year, y = yield)) +
 
 \hstart
 
-* 
+* There is a significant increase in yield over time.
 
 \hstop
 
@@ -184,12 +184,12 @@ ggplot(cornWinneshiek) +
   geom_point(mapping = aes(x = year, y = yield)) +
   geom_line(mapping = aes(x = year, y = fitted)) +
   theme_bw() +
-  labs(x = "year", y = "yield")
+  labs(x = "Year", y = "Yield")
 ```
 
 \hstart
 
-* 
+* The quadratic time trend does not show evidence of slowing yield growth.
 
 \hstop
 
@@ -213,13 +213,13 @@ ggplot(WinneshiekJoin) +
   geom_point(mapping = aes(x = meantmax, y = yield)) +
   geom_line(mapping = aes(x = meantmax, y = quadfitted)) +
   theme_bw() +
-  labs(x = "Temperature", y = "yield")
+  labs(x = "Temperature", y = "Yield")
 
 ```
 
 \hstart
 
-* 
+* It is not helpful to add Tmax^2 to the model. 
 
 \hstop
 
@@ -254,29 +254,29 @@ summary(lm_county18)
 county_yield18$quadfitted<-lm_county18$fitted.values
 
 #plot
-ggplot(county_yield18, aes(x = yield, y = meantmax))+
+ggplot(county_yield18, aes(x = meantmax, y = yield))+
   geom_point()+
   theme_bw()+
-  labs(x = "Yield", y = "Mean Max Temp (°C)")
+  labs(x = "Temperature", y = "Yield")
 
 #plot quadratic
 ggplot(county_yield18) +
   geom_point(mapping = aes(x = meantmax, y = yield)) +
   geom_line(mapping = aes(x = meantmax, y = quadfitted)) +
   theme_bw() +
-  labs(x = "Yield", y = "Temperature")
+  labs(x = "Temperature", y = "Yield")
 
 ```
 
 \hstart
 
-* 
+* There is not a trend but the quadratic, however, does show a trend. Looking at the quadratic, there is a decrease in yield for both cooler and hotter temperatures, the peak yield occurs closer to 28°C.
 
 \hstop
 
 ### Question 4 -- Panel: One way to leverage multiple time series is to group all data into what is called a "panel" regression. Convert the county ID code ("countyfp" or "county_ansi") into factor using as.factor, then include this variable in a regression using all counties' yield and summer temperature data. How does the significance of your temperature coefficients (Tmax, Tmax^2) change? Make a plot comparing actual and fitted yields and interpret the results of your model.
 
-```{r}
+```{r, message=FALSE}
 # combine data
 ttocombine <- tmaxdf%>%
   filter(doy >= 152 & doy <= 243) %>%
@@ -311,13 +311,13 @@ ggplot(yieldtemp, aes(x = fittedyield, y = yield))+
 
 \hstart
 
-* 
+* Because the fitted values generally follow the actual yield values and there is a high p-value there is a significant goodness of fit for the model.
 
 \hstop
 
 ### Question 5 -- Soybeans: Download NASS data on soybean yields and explore either a time series relationship for a given county, the cross-sectional relationship for a given year, or a panel across all counties and years.
 
-```{r}
+```{r, results='hide', message=FALSE}
 
 # set our API key with NASS
 nassqs_auth(key = "DD0322AC-2B3C-34A0-B93C-52D5A8844518")
@@ -352,15 +352,11 @@ ggplot(soyWinneshiek, mapping = aes(x = year, y = yield)) +
 
 ```
 
-\hstart
 
-* 
-
-\hstop
 
 ### Bonus: Find a package to make a county map of Iowa displaying some sort of information about yields or weather. Interpret your map.
 
-```{r}
+```{r, message=FALSE, warning=F}
 #USA
 usa<-map_data('usa')
 
@@ -387,9 +383,9 @@ iowa <- subset(state, region=="iowa")
 counties <- map_data("county")
 iowa_county <- subset(counties, region=="iowa")
 
-ca_map <- ggplot(data=iowa, mapping=aes(x=long, y=lat, group=group)) + 
+ca_map <- ggplot(data=iowa, mapping=aes(x=long, y=lat, group=group,)) + 
   coord_fixed(1.3) + 
-  geom_polygon(color="black", fill="blue") + 
+  geom_polygon(color="black", fill = "blue") + 
   geom_polygon(data=iowa_county, fill=NA, color="white") + 
   geom_polygon(color="black", fill=NA) + 
   ggtitle('Iowa Map with Counties') + 
